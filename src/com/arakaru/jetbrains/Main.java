@@ -2,30 +2,72 @@ package com.arakaru.jetbrains;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
+	static String[] Words;
+	private static int syllables = 0;
+	private static int polysyllables = 0;
+
+	static void initPoly() {
+
+		for (int i = 0; i < Words.length; i++) {
+			int poly = 0;
+			String temp = Words[i].replaceAll("!|\\?|\\. *", "");
+			Matcher match = Pattern.compile("e$").matcher(temp);
+			while (match.find()) {
+				temp = match.replaceAll("");
+			}
+			match = Pattern.compile("([aioeuyAEIOUY])").matcher(temp);
+			if (!match.find()) {
+				syllables += 1;
+			}
+			match = Pattern.compile("([aioeuyAEIOUY]){2,3}").matcher(temp);
+
+			while (match.find()) {
+				syllables += 1;
+				poly += 1;
+			}
+
+			temp = match.replaceAll("");
+
+			match = Pattern.compile("[aioeuyAEIOUY]").matcher(temp);
+
+			while (match.find()) {
+				poly += 1;
+				syllables++;
+
+			}
+			if (poly > 2)
+				polysyllables += 1;
+		}
+
+	}
 
 	public static void main(String[] args) {
 
 		try (Scanner scanner = new Scanner(new File("src/com/arakaru/jetbrains/dataset_91007.txt"))) {
-			int count = 0;
+
 			int scoreForAge;
-			int polycounnt = 0;
+
 			double score = 0;
+
 			String years = "";
 			while (scanner.hasNextLine()) {
+
 				String param = scanner.nextLine();
 				String[] Sentences = param.split("!|\\?|\\. *");
-				String[] Words = param.split(" ");
+				Words = param.split(" ");
 				String Characters = param.replaceAll("[ \\t\\n]", "");
+				initPoly();
 
-				// score=new FleschKincaid(Sentences,Words).getScore();
+				// score=new FleschKincaid(Sentences,Words,syllables).getScore();
 				score = new Automated(Sentences, Words, Characters).getScore();
-
+				// score = new Smog(polysyllables, Sentences).getScore();
 				scoreForAge = (int) Math.floor(score);
 
 				switch (scoreForAge) {
@@ -76,8 +118,8 @@ public class Main {
 				System.out.println("Sentences: " + Sentences.length);
 				System.out.println("Characters: " + Characters.length());
 				System.out.println("The score is: " + score);
-				System.out.println("Syllables: " + FleschKincaid.getSyllables());
-				System.out.println("Polysyllables: " + FleschKincaid.getPolysyllables());
+				System.out.println("Syllables: " + syllables);
+				System.out.println("Polysyllables: " + polysyllables);
 				System.out.println("This text should be understood by " + years);
 
 			}
